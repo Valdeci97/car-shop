@@ -15,5 +15,5 @@ const CarSchema = new Schema<CarDocument>({
 });
 
 export default class CarModel extends MongoModel<Car> {
-  constructor(model = CreateModel('Cars', CarSchema)) { super(model); }
+  constructor(model = CreateModel('Car', CarSchema)) { super(model); }
 }
