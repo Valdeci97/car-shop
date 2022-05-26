@@ -24,17 +24,18 @@ export default abstract class Controller<T> {
     res: Response<T | ResponseError>
   ): Promise<typeof res>;
 
-  public async read(
+  public read = async (
     _req: Request,
     res: Response<T[] | ResponseError>,
-  ): Promise<typeof res> {
+  ): Promise<typeof res> => {
     try {
       const obj = await this.service.read();
       return res.status(200).json(obj);
     } catch (err) {
+      console.log(err);
       return res.status(500).json({ error: this.errors.internal });
     }
-  }
+  };
 
   public abstract readOne(
     req: Request<{ id: string }>,

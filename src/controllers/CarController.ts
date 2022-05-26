@@ -13,10 +13,10 @@ export default class CarController extends Controller<Car> {
 
   get route() { return this._route; }
 
-  public async create(
+  public create = async (
     req: RequestWithBody<Car>,
     res: Response<Car | ResponseError>,
-  ): Promise<typeof res> {
+  ): Promise<typeof res> => {
     const { body } = req;
     try {
       const cars = await this.service.create(body);
@@ -28,12 +28,12 @@ export default class CarController extends Controller<Car> {
     } catch (err) {
       return res.status(500).json({ error: this.errors.internal });
     }
-  }
+  };
 
-  public async readOne(
+  public readOne = async (
     req: Request<{ id: string; }>,
     res: Response<Car | ResponseError>,
-  ): Promise<typeof res> {
+  ): Promise<typeof res> => {
     const { id } = req.params;
     try {
       if (id.length !== 24) {
@@ -45,12 +45,12 @@ export default class CarController extends Controller<Car> {
     } catch (err) {
       return res.status(500).json({ error: this.errors.internal });
     }
-  }
+  };
 
-  public async update(
+  public update = async (
     req: Request<{ id: string; } & Car>,
     res: Response<Car | ResponseError>,
-  ): Promise<typeof res> {
+  ): Promise<typeof res> => {
     const { body } = req;
     const { id } = req.params;
     try {
@@ -61,28 +61,29 @@ export default class CarController extends Controller<Car> {
       if (!updatedCar) {
         return res.status(404).json({ error: this.errors.notFound });
       }
+      if ('error' in updatedCar) return res.status(400).json(updatedCar);
       return res.status(200).json(updatedCar);
     } catch (err) {
       return res.status(500).json({ error: this.errors.internal });
     }
-  }
+  };
 
-  public async delete(
+  public delete = async (
     req: Request<{ id: string }>,
     res: Response<Car | ResponseError>,
-  ): Promise<Response | void | ResponseError> {
+  ): Promise<Response | void | ResponseError> => {
     const { id } = req.params;
     try {
       if (id.length !== 24) {
         return res.status(400).json({ error: this.errors.idNotHexa });
       }
-      const updatedCar = await this.service.delete(id);
-      if (updatedCar) {
+      const deletedCar = await this.service.delete(id);
+      if (!deletedCar) {
         return res.status(404).json({ error: this.errors.notFound });
       }
       return res.status(204).end();
     } catch (err) {
       return res.status(500).end();
     }
-  }
+  };
 }

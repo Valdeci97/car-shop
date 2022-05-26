@@ -12,4 +12,15 @@ export default class CarService extends Service<Car> {
     }
     return this.model.create(obj);
   }
+
+  public async update(
+    id: string,
+    obj: Car,
+  ): Promise<Car | HttpExecpetion | null> {
+    const parsed = CarSchema.safeParse(obj);
+    if (!parsed.success) {
+      return { error: parsed.error };
+    }
+    return this.model.update(id, obj);
+  }
 }
