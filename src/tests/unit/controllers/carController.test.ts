@@ -1,156 +1,201 @@
-import sinon from 'sinon';
+import * as sinon from 'sinon';
 import chai from 'chai';
-import chaiHtpp = require('chai-http');
-import CarController from '../../../controllers/CarController';
-import server from '../../../server';
-import CarModel from '../../../models/CarModel';
+import server, { carService, carController } from './mocks/server';
+import { carById, cars, updatedCar, createdCar, validCar, invalidCar } from './mocks';
 
-import { createdCar, validCar, invalidCar, cars, carById, updatedCar } from './mocks';
+import chaiHttp = require('chai-http');
 
+chai.use(chaiHttp);
 const { expect } = chai;
-chai.use(chaiHtpp);
-const controller = new CarController();
 
-describe('Testando o método de criação do controller de carros', () => {
-  const app = server.getApp();
-  let model = new CarModel();
-  describe('Teste da função create', () => {
-    describe('Sucesso ao criar o carro', () => {
-      before(async () => { sinon.stub(model, 'create').resolves(createdCar as any) });
-      after(() => { (model.create as sinon.SinonStub).restore(); });
-
-      it('Deve retornar um status http 201', async () => {
-        const chaiHtppResponse = await chai.request(app).post(controller.route).send(validCar);
-        expect(chaiHtppResponse.status).to.be.equal(201);
-        expect(chaiHtppResponse.body).to.be.an('object');
-        expect(chaiHtppResponse.body).to.not.have.own.property('__v');
-      });
+describe('Testando o controller de carros', () => {
+  describe('Verifica comportamento da função read em caso de sucesso', () => {
+    before(async () => {
+      sinon.stub(carService, 'read').resolves(cars);
     });
 
-    describe('Não tem sucesso ao criar o carro', () => {
-      before(async() => { sinon.stub(model, 'create').resolves({ error: {} } as any) });
-      after(() => { (model.create as sinon.SinonStub).restore() });
+    after(() => (carService.read as sinon.SinonStub).restore());
 
-      it('Deve retornar um status http 400', async () => {
-        const chaiHtppResponse = await chai.request(app).post(controller.route).send(invalidCar);
-        expect(chaiHtppResponse.status).to.be.equal(400);
-        expect(chaiHtppResponse.body).to.be.an('object');
-        expect(chaiHtppResponse.body).to.have.own.property('error');
-      });      
+    it('Deve retornar status http 200 e um array no corpo da requisição', async () => {
+      const res = await chai.request(server.getApp()).get(carController.route);
+      expect(res.status).to.be.equal(200);
+      expect(res.body).to.be.an('array').to.have.length(2);
     });
 
-    describe('Teste middleware erro global no controller de carros', () => {
-      before(async() => { sinon.stub(model, 'create').rejects(new Error); });
-      after(() => { (model.create as sinon.SinonStub).restore() });
-      it('Esperado Status 500', async () => {
-        const chaiHtppResponse = await chai.request(app).post(controller.route).send(validCar);
-        expect(chaiHtppResponse.status).to.be.equal(500);
-        expect(chaiHtppResponse.body).to.be.an('object');
-        expect(chaiHtppResponse.body).to.have.own.property('error');
-        expect(chaiHtppResponse.body.error).to.be.equal('Internal server error');
-        });
-    });
-  });
-});
-
-describe('Testando o método de leitura do controller de carros', () => {
-  const app = server.getApp();
-  let model = new CarModel();
-  describe('Lendo os carros que existem no banco de dados', () => {
-    before(async () => sinon.stub(model, 'read').resolves(cars as any));
-    after(() => (model.read as sinon.SinonStub).restore());
-    it('Deve retornar status htpp 200', async () => {
-      const chaiHtppResponse = await chai.request(app).get(controller.route);
-      expect(chaiHtppResponse.status).to.be.equal(200);
-      expect(chaiHtppResponse.body).to.be.an('array').to.have.length(2);
+    it(
+      'A primeira posição do array é um objeto e não possui a chave de versão "__v"',
+      async () => {
+        const res = await chai.request(server.getApp()).get(carController.route);
+        expect(res.body[0]).to.be.an('object').to.not.have.own.property('__v');
     });
   });
 
-  describe('Teste middleware erro global no controller de carros', () => {
-      before(async() => { sinon.stub(model, 'read').rejects(new Error); });
-      after(() => { (model.read as sinon.SinonStub).restore() });
-      it('Esperado Status 500', async () => {
-        const chaiHtppResponse = await chai.request(app).post(controller.route).send(validCar);
-        expect(chaiHtppResponse.status).to.be.equal(500);
-        expect(chaiHtppResponse.body).to.be.an('object');
-        expect(chaiHtppResponse.body).to.have.own.property('error');
-        expect(chaiHtppResponse.body.error).to.be.equal('Internal server error');
-        });
+  describe('Verifica o comportamento da função read em caso de insucesso', () => {
+    before(async () => {
+      sinon.stub(carService, 'read').rejects();
     });
-});
 
-describe('Testando o método de leitura pro id', () => {
-  const app = server.getApp();
-  let model = new CarModel();
-  describe('Passando um id existente no banco de dados', () => {
-    before(async () => { sinon.stub(model, 'readOne').resolves(carById as any) });
-    after(() => (model.readOne as sinon.SinonStub).restore());
+    after(() => (carService.read as sinon.SinonStub).restore());
 
-    it('Deve retornar status htpp 200', async () => {
-      const chaiHtppResponse = await chai.request(app).get(`${controller.route}/${carById._id}`);
-      expect(chaiHtppResponse.status).to.be.equal(200);
-      expect(chaiHtppResponse.body).to.be.an('object').to.have.own.property('buyValue');
+    it('Deve retornar um status http 500 e um objeto com a propriedade error', async () => {
+      const res = await chai.request(server.getApp()).get(carController.route);
+      expect(res.status).to.be.equal(500);
+      expect(res.body).to.be.an('object').to.have.own.property('error');
     });
   });
 
-  describe('Passando um id inexistente no banco de dados', () => {
-    before(async () => { sinon.stub(model, 'readOne').resolves({} as any) });
-    after(() => (model.readOne as sinon.SinonStub).restore());
+  describe('Verifica o funcionamento da função readOne em caso de sucesso', () => {
+    before(async () => {
+      sinon.stub(carService, 'readOne').resolves(carById);
+    });
 
-    it('Deve retornar status htpp 404', async () => {
-      const chaiHtppResponse = await chai.request(app).get(`${controller.route}/${carById._id!}`);
-      expect(chaiHtppResponse.status).to.be.equal(404);
-      expect(chaiHtppResponse.body).to.be.an('object').to.have.own.property('error');
+    after(() => (carService.readOne as sinon.SinonStub).restore());
+
+    it('Deve retornar um status http 200 e um objeto', async () => {
+      const res = await chai.request(server.getApp()).get(
+        `${carController.route}/${carById._id}`
+      );
+      expect(res.status).to.be.equal(200);
+      expect(res.body).to.be.an('object').to.include.all.keys([
+        '_id',
+        'model',
+        'year',
+        'color',
+        'status',
+        'buyValue',
+        'doorsQty',
+        'seatsQty',
+      ]);
     });
   });
 
-  describe('Teste middleware erro global no controller de carros', () => {
-      before(async() => { sinon.stub(model, 'readOne').rejects(new Error); });
-      after(() => { (model.readOne as sinon.SinonStub).restore() });
-      it('Esperado Status 500', async () => {
-        const chaiHtppResponse = await chai.request(app).post(controller.route).send(validCar);
-        expect(chaiHtppResponse.status).to.be.equal(500);
-        expect(chaiHtppResponse.body).to.be.an('object');
-        expect(chaiHtppResponse.body).to.have.own.property('error');
-        expect(chaiHtppResponse.body.error).to.be.equal('Internal server error');
-        });
+  describe('Verifica o funcionamento da função readOne em caso de insucesso', () => {
+    before(async () => {
+      sinon.stub(carService, 'readOne').rejects();
     });
-});
 
-describe('Testando o método de atualização do controller de carros', () => {
-  const app = server.getApp();
-  let model = new CarModel();
-  describe('Atualiza o carro com sucesso', () => {
-    before(async() => { sinon.stub(model, 'update').resolves(updatedCar as any); });
-    after(() => { (model.update as sinon.SinonStub).restore() });
+    after(() => (carService.readOne as sinon.SinonStub).restore());
 
-    it('Deve retornar status htpp 200', async () => {
-      const chaiHtppResponse = await chai.request(app).put(`${controller.route}/${updatedCar._id}`).send(validCar);
-      expect(chaiHtppResponse.status).to.be.equal(200);
-      expect(chaiHtppResponse.body).to.be.an('object').to.have.own.property('seatsQty');
+    it(
+      'É informado um id com comprimento diferente de 24 caracteres e retorna status http 400',
+      async () => {
+        const res = await chai.request(server.getApp()).get(`${carController.route}/1`);
+        expect(res.status).to.be.equal(400);
+        expect(res.body).to.be.an('object').to.have.own.property('error');
+    });
+
+    it('Problema no banco de dados, deve retornar um status http 500', async () => {
+      const res = await chai.request(server.getApp()).get(
+        `${carController.route}/${carById._id}`
+      );
+      expect(res.status).to.be.equal(500);
+      expect(res.body).to.be.an('object').to.have.own.property('error');
     });
   });
 
-  describe('Passa um id que não existe no banco de dados', () => {
-    before(async() => { sinon.stub(model, 'update').resolves({} as any); });
-    after(() => { (model.update as sinon.SinonStub).restore() });
+  describe('Verifica o funcionamento da função create em caso de sucesso', () => {
+    before(async () => {
+      sinon.stub(carService, 'create').resolves(createdCar);
+    });
 
-    it('Deve retornar status htpp 404', async () => {
-      const chaiHtppResponse = await chai.request(app).put(`${controller.route}/${updatedCar._id!}`).send(validCar);
-      expect(chaiHtppResponse.status).to.be.equal(404);
-      expect(chaiHtppResponse.body).to.be.an('object').to.have.own.property('error');
+    after(() => (carService.create as sinon.SinonStub).restore());
+
+    it('Deve retornar um status http 201 e um objeto do carro criado', async () => {
+      const res = await chai.request(server.getApp()).post(carController.route)
+        .send(validCar);
+      expect(res.status).to.be.equal(201);
+      expect(res.body).to.be.an('object').to.not.have.own.property('__v');
     });
   });
 
-  describe('Teste middleware erro global no controller de carros', () => {
-      before(async() => { sinon.stub(model, 'readOne').rejects(new Error); });
-      after(() => { (model.readOne as sinon.SinonStub).restore() });
-      it('Esperado Status 500', async () => {
-        const chaiHtppResponse = await chai.request(app).post(controller.route).send(validCar);
-        expect(chaiHtppResponse.status).to.be.equal(500);
-        expect(chaiHtppResponse.body).to.be.an('object');
-        expect(chaiHtppResponse.body).to.have.own.property('error');
-        expect(chaiHtppResponse.body.error).to.be.equal('Internal server error');
-        });
+  describe('Verifica o funcionamento da função create em caso de insucesso', () => {
+    before(async () => {
+      sinon.stub(carService, 'create').rejects();
     });
+
+    after(() => (carService.create as sinon.SinonStub).restore());
+
+    it('Envia um carro válido mas ocorre problema na criação do carro', async () => {
+      const res = await chai.request(server.getApp()).post(carController.route)
+        .send(validCar);
+      expect(res.status).to.be.equal(500);
+      expect(res.body).to.have.own.property('error');
+    });
+  });
+
+  describe('Verifica o funcionamento da função update em caso de sucesso', () => {
+    before(async () => {
+      sinon.stub(carService, 'update').resolves(updatedCar);
+    });
+
+    after(() => (carService.update as sinon.SinonStub).restore());
+
+    it('Deve retornar status http 200', async () => {
+      const res = await chai.request(server.getApp()).put(
+        `${carController.route}/${updatedCar._id}`
+      ).send(validCar);
+      expect(res.status).to.be.equal(200);
+      expect(res.body).to.not.have.own.property('__v');
+    });
+  });
+
+  describe('Verifica o funcionamento da função update em caso de insucesso', () => {
+    before(async () => {
+      sinon.stub(carService, 'update').resolves(null);
+    });
+
+    after(() => (carService.update as sinon.SinonStub).restore());
+
+    it(
+      'Deve retornar status http 400 pois o id tem comprimento diferente de 24 caracteres',
+      async () => {
+        const res = await chai.request(server.getApp()).put(`${carController.route}/1`)
+          .send(validCar);
+        expect(res.status).to.be.equal(400);
+        expect(res.body).to.have.own.property('error');
+    });
+
+    it('Deve retornar status 404 pois o id informado não existe', async () => {
+      const res = await chai.request(server.getApp()).put(
+        `${carController.route}/${updatedCar._id}`).send(validCar);
+      expect(res.status).to.be.equal(404);
+    });
+  });
+
+  describe('Verifica funcionamento da função delete em caso de sucesso', () => {
+    before(async () => {
+      sinon.stub(carService, 'delete').resolves(carById);
+    });
+
+    after(() => (carService.delete as sinon.SinonStub).restore());
+
+    it('Deve retornar status http 204', async () => {
+      const res = await chai.request(server.getApp()).delete(
+        `${carController.route}/${updatedCar._id}`).send(validCar);
+      expect(res.status).to.be.equal(204);
+    });
+  });
+
+  describe('Verifica o funcionamento da função delete em caso de insucesso', () => {
+    before(async () => {
+      sinon.stub(carService, 'delete').resolves(null);
+    });
+
+    after(() => (carService.delete as sinon.SinonStub).restore());
+
+    it(
+      'Deve retornar status http 400 pois o id tem comprimento diferente de 24 caracteres',
+      async () => {
+        const res = await chai.request(server.getApp()).delete(`${carController.route}/1`)
+          .send(validCar);
+        expect(res.status).to.be.equal(400);
+        expect(res.body).to.have.own.property('error');
+    });
+
+    it('Deve retornar status 404 pois o id informado não existe', async () => {
+      const res = await chai.request(server.getApp()).delete(
+        `${carController.route}/${updatedCar._id}`).send(validCar);
+      expect(res.status).to.be.equal(404);
+    });
+  });
 });
