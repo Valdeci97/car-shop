@@ -32,7 +32,6 @@ export default abstract class Controller<T> {
       const obj = await this.service.read();
       return res.status(200).json(obj);
     } catch (err) {
-      console.log(err);
       return res.status(500).json({ error: this.errors.internal });
     }
   };
