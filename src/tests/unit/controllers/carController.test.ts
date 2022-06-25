@@ -44,7 +44,7 @@ describe('Testando o controller de carros', () => {
     });
   });
 
-  describe('Verifica o funcionamento da função readOne em caso de sucesso', () => {
+  describe('Verifica o comportamento da função readOne em caso de sucesso', () => {
     before(async () => {
       sinon.stub(carService, 'readOne').resolves(carById);
     });
@@ -69,7 +69,7 @@ describe('Testando o controller de carros', () => {
     });
   });
 
-  describe('Verifica o funcionamento da função readOne em caso de insucesso', () => {
+  describe('Verifica o comportamento da função readOne em caso de insucesso', () => {
     before(async () => {
       sinon.stub(carService, 'readOne').rejects();
     });
@@ -93,7 +93,7 @@ describe('Testando o controller de carros', () => {
     });
   });
 
-  describe('Verifica o funcionamento da função create em caso de sucesso', () => {
+  describe('Verifica o comportamento da função create em caso de sucesso', () => {
     before(async () => {
       sinon.stub(carService, 'create').resolves(createdCar);
     });
@@ -108,7 +108,18 @@ describe('Testando o controller de carros', () => {
     });
   });
 
-  describe('Verifica o funcionamento da função create em caso de insucesso', () => {
+  describe(
+    'Verifica o comportamento da função create com um objeto fora do padrões',
+    () => {
+      it('Deve retornar um objeto com a propriedade "error"', async () => {
+        const res = await chai.request(server.getApp()).post(carController.route)
+          .send({});
+        expect(res.status).to.be.equal(400);
+        expect(res.body).to.be.an('object').to.have.own.property('error');
+      });
+  });
+
+  describe('Verifica o comportamento da função create em caso de insucesso', () => {
     before(async () => {
       sinon.stub(carService, 'create').rejects();
     });
@@ -123,7 +134,7 @@ describe('Testando o controller de carros', () => {
     });
   });
 
-  describe('Verifica o funcionamento da função update em caso de sucesso', () => {
+  describe('Verifica o comportamento da função update em caso de sucesso', () => {
     before(async () => {
       sinon.stub(carService, 'update').resolves(updatedCar);
     });
@@ -139,7 +150,7 @@ describe('Testando o controller de carros', () => {
     });
   });
 
-  describe('Verifica o funcionamento da função update em caso de insucesso', () => {
+  describe('Verifica o comportamento da função update em caso de insucesso', () => {
     before(async () => {
       sinon.stub(carService, 'update').resolves(null);
     });
@@ -162,7 +173,18 @@ describe('Testando o controller de carros', () => {
     });
   });
 
-  describe('Verifica funcionamento da função delete em caso de sucesso', () => {
+  describe('Verifica o comportamento da função update em caso de erro no banco', () => {
+    before(async () => sinon.stub(carService, 'update').rejects());
+    after(() => (carService.update as sinon.SinonStub).restore());
+
+    it('Deve retornar um status http 500', async () => {
+      const res = await chai.request(server.getApp()).put(
+        `${carController.route}/${updatedCar._id}`).send(validCar);
+      expect(res.status).to.be.equal(500);
+    });
+  });
+
+  describe('Verifica comportamento da função delete em caso de sucesso', () => {
     before(async () => {
       sinon.stub(carService, 'delete').resolves(carById);
     });
@@ -176,7 +198,7 @@ describe('Testando o controller de carros', () => {
     });
   });
 
-  describe('Verifica o funcionamento da função delete em caso de insucesso', () => {
+  describe('Verifica o comportamento da função delete em caso de insucesso', () => {
     before(async () => {
       sinon.stub(carService, 'delete').resolves(null);
     });
@@ -196,6 +218,17 @@ describe('Testando o controller de carros', () => {
       const res = await chai.request(server.getApp()).delete(
         `${carController.route}/${updatedCar._id}`).send(validCar);
       expect(res.status).to.be.equal(404);
+    });
+  });
+
+  describe('Verifica o comportamento da função delete em caso de erro no banco', () => {
+    before(async () => sinon.stub(carService, 'delete').rejects());
+    after(() => (carService.delete as sinon.SinonStub).restore());
+
+    it('Deve retornar um status http 500', async () => {
+      const res = await chai.request(server.getApp()).delete(
+        `${carController.route}/${updatedCar._id}`).send(validCar);
+      expect(res.status).to.be.equal(500);
     });
   });
 });
