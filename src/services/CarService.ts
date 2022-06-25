@@ -1,11 +1,11 @@
 import { Car, CarSchema } from '../interfaces/CarInterface';
-import Service, { HttpExecpetion } from '.';
+import Service, { HttpException } from '.';
 import CarModel from '../models/CarModel';
 
 export default class CarService extends Service<Car> {
   constructor(model = new CarModel()) { super(model); }
 
-  public async create(obj: Car): Promise<Car | HttpExecpetion | null> {
+  public async create(obj: Car): Promise<Car | HttpException | null> {
     const parsed = CarSchema.safeParse(obj);
     if (!parsed.success) {
       return { error: parsed.error };
@@ -16,7 +16,7 @@ export default class CarService extends Service<Car> {
   public async update(
     id: string,
     obj: Car,
-  ): Promise<Car | HttpExecpetion | null> {
+  ): Promise<Car | HttpException | null> {
     const parsed = CarSchema.safeParse(obj);
     if (!parsed.success) {
       return { error: parsed.error };
