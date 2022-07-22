@@ -14,7 +14,9 @@ Usando dos princípios [SOLID](https://medium.com/desenvolvendo-com-paixao/o-que
   <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original-wordmark.svg" width="50px" margin-left="5px" />
 </div>
 
-## Como usar
+##
+
+## <div align="center">Como usar</div>
 
 Você vai precisar do [Nodejs 16.16 ou maior](https://nodejs.org/en/) instalado na sua máquina.
 Também precisa ter o [Git](https://git-scm.com/downloads) instalado em sua máquina.
