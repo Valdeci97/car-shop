@@ -25,10 +25,31 @@ Também precisa ter o [Git](https://git-scm.com/downloads) instalado em sua máq
   - Você precisará do [MongoDB 4.4.15 ou maior](https://www.mongodb.com/try/download/community) e sugiro usar uma interface gráfica para acompanhar as mudanças das aplicação [MongoDB compass](https://www.mongodb.com/try/download/compass);
   - Ou ainda do [Docker](https://docs.docker.com/engine/install/) e [docker compose 1.29 ou maior](https://docs.docker.com/compose/install/).
   - Também vai precisar de uma aplicação que gerencie requisições HTTP sugiro [Insonmia](https://insomnia.rest/download) ou [Postman](https://www.postman.com/downloads/);
+</details>
+
+<details>
+  <summary>Como subir o banco de dados com docker</summary>
+
+  - Baixe a imagem do mongo:
+  ```
+  $docker pull mongo
+  ```
   
-
-Também precisará de um 
-
+  - Suba o container mongo:
+  ```
+  $docker run --name <nome-do-container> -p 27017:27017 -d mongo
+  ```
+  PS: substitua nome-do-container por qual nome você preferir
+  
+  - Veja se o container está rodando:
+  ```
+  $docker ps
+  ```
+  
+  - Ao finalizar derrube o conatiner:
+  ```
+  $docker stop <nome-do-conatiner>
+  ```
 </details>
 
 ```
@@ -44,4 +65,11 @@ Instale as dependências caso hajam
 
 $npm i
 
+Para ver os testes
+
+$npm test
+  
+Para ver a cobertura
+
+$npm run test:coverage
 ```
